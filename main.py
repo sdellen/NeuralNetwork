@@ -2,6 +2,8 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
+foo = 0
+
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def sigmoid_prime(x): return x * (1 - x)
 def tanh(x): return np.tanh(x)
@@ -45,6 +47,7 @@ class Network():
         self.loss = []
         start_time = time.time()  # start the timer
         epoch_loss = 0
+
         for i in range(epochs):
             epoch_loss = 0
             for j in range(len(inputs)):
@@ -54,13 +57,13 @@ class Network():
             epoch_loss /= len(inputs)
             self.loss.append(epoch_loss)
 
+
             if i % (epochs//100) == 0:
                 progress = int((i / epochs) * 100)
-                bar = '=' * (int(progress/5)-1) + '>'
+                bar = ('=' * (int(progress/5)-1) + '>') if foo else ('8=' + '=' * (int(progress/5)-3) + 'D')
                 print(f"Progress: [{bar:<20}] {progress:>3}% Loss: {epoch_loss:.5e} ", end="\r", flush=True)
 
-        
-        print(f"Progress: [{'=' * 20}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True)
+        print(f"Progress: [{'=' * 20}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True) if foo else print(f"Progress: [{'8' + '=' * 18 + 'D'}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True)
 
         end_time = time.time()  # end the timer
         elapsed_time = end_time - start_time  # calculate elapsed time
