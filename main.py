@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
 
-foo = 1
+foo = 0
 
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def sigmoid_prime(x): return x * (1 - x)
@@ -97,7 +97,7 @@ class Layer():
 
 def main():
     # hyperparameters
-    num_samples = 100
+    num_samples = 1000
     num_epochs = 100
     learning_rate = 1
 
