@@ -44,7 +44,7 @@ class Network():
     def train(self, inputs, outputs, epochs, learning_rate):
         self.loss = []
         start_time = time.time()  # start the timer
-
+        epoch_loss = 0
         for i in range(epochs):
             epoch_loss = 0
             for j in range(len(inputs)):
@@ -59,8 +59,8 @@ class Network():
                 bar = '=' * (int(progress/5)-1) + '>'
                 print(f"Progress: [{bar:<20}] {progress:>3}% Loss: {epoch_loss:.5e} ", end="\r", flush=True)
 
-            if i == epochs - 1:
-                print(f"Progress: [{'=' * 20}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True)
+        
+        print(f"Progress: [{'=' * 20}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True)
 
         end_time = time.time()  # end the timer
         elapsed_time = end_time - start_time  # calculate elapsed time
