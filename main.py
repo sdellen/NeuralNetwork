@@ -2,7 +2,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-foo = 0
+foo = 1
 
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def sigmoid_prime(x): return x * (1 - x)
