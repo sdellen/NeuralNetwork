@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+from keras.datasets import mnist
 
 foo = 1
 
@@ -57,20 +58,16 @@ class Network():
             epoch_loss /= len(inputs)
             self.loss.append(epoch_loss)
 
-
+            # print progress and estimated time to completion
             if i % (epochs//100) == 0:
                 progress = int((i / epochs) * 100)
                 bar = ('=' * (int(progress/5)-1) + '>') if foo else ('8=' + '=' * (int(progress/5)-3) + 'D')
-                print(f"Progress: [{bar:<20}] {progress:>3}% Loss: {epoch_loss:.5e} ", end="\r", flush=True)
+                print(f"Progress: [{bar:<20}] {progress:>3}% Loss: {epoch_loss:.5e}", end="\r", flush=True)
 
+        # print final progress and elapsed time
         print(f"Progress: [{'=' * 20}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True) if foo else print(f"Progress: [{'8' + '=' * 18 + 'D'}] 100% Loss: {epoch_loss:.5e}", end="\n", flush=True)
-
-        end_time = time.time()  # end the timer
-        elapsed_time = end_time - start_time  # calculate elapsed time
+        elapsed_time = time.time() - start_time
         print(f"Elapsed time: {elapsed_time:.2f} seconds")  # print elapsed time
-
-    def predict(self, input):
-        return self.forward(input)
 
 class Layer():
     def __init__(self, input_size, output_size, activation=sigmoid, activation_prime=sigmoid_prime):
@@ -99,30 +96,50 @@ class Layer():
         self.W -= learning_rate * self.deltas * inputs[:, None]
 
 def main():
-    # create a dataset to train a network for the sum operation
-    # inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-    # outputs = np.array([[0], [1], [1], [0]])
+    # hyperparameters
+    num_samples = 100
+    num_epochs = 100
+    learning_rate = 1
 
-    inputs = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]])
-    outputs = np.array([[int(1)], [0.2], [0.3]])
+    # load the mnist dataset
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    # reshape and normalize the images
+    x_train = x_train.reshape(x_train.shape[0], -1)
+    x_train = x_train.astype('float32') / 255
+    y_train = np.eye(10)[y_train]
+    x_test = x_test.reshape(x_test.shape[0], -1)
+    x_test = x_test.astype('float32') / 255
+    y_test = np.eye(10)[y_test]
+
+    # only use a subset of the data to train
+    inputs_train = x_train[:num_samples]
+    outputs_train = y_train[:num_samples]
 
     # create a network
-    net = Network(3)
-    net.add_layer(10)
-    net.add_layer(1)
+    net = Network(784) # 28x28 images. this is the inputs to the network
+    net.add_layer(16) # hidden layer with 16 nodes
+    net.add_layer(16) # hidden layer with 16 nodes
+    net.add_layer(10) # output layer with 10 nodes
 
     # train the network
-    net.train(inputs, outputs, 10000, 1)
+    net.train(inputs_train, outputs_train, num_epochs, learning_rate)
 
     # test the network
-    for i in range(len(inputs)):
-        print(f"Output: {net.predict(inputs[i])[0]:.5f} Target: {outputs[i][0]:.5f}")
+    inputs_test = x_test[:60000]
+    outputs_test = y_test[:60000]
 
-    # # plot the loss over time
-    # plt.plot(net.loss)
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.show()
+    # calculate and print the accuracy
+    incorrect_predictions = 0
+    for i in range(len(inputs_test)):
+        incorrect_predictions += np.argmax(net.forward(inputs_test[i])) == np.argmax(outputs_test[i])
+    print(f"Accuracy: {incorrect_predictions/len(inputs_test)*100:.2f}%")
+
+    # plot the loss over time, aka epochs
+    plt.plot(net.loss)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.show()
 
 if __name__ == "__main__":
     main()
