@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
 
-foo = 1
+foo = 0
 
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def sigmoid_prime(x): return x * (1 - x)
@@ -58,7 +58,7 @@ class Network():
             epoch_loss /= len(inputs)
             self.loss.append(epoch_loss)
 
-            # print progress and estimated time to completion
+            # print progress
             if i % (epochs//100) == 0:
                 progress = int((i / epochs) * 100)
                 bar = ('=' * (int(progress/5)-1) + '>') if foo else ('8=' + '=' * (int(progress/5)-3) + 'D')
@@ -97,7 +97,8 @@ class Layer():
 
 def main():
     # hyperparameters
-    num_samples = 1000
+    num_test_samples = 60000
+    num_train_samples = 1000
     num_epochs = 100
     learning_rate = 1
 
@@ -113,8 +114,8 @@ def main():
     y_test = np.eye(10)[y_test]
 
     # only use a subset of the data to train
-    inputs_train = x_train[:num_samples]
-    outputs_train = y_train[:num_samples]
+    inputs_train = x_train[:num_train_samples]
+    outputs_train = y_train[:num_train_samples]
 
     # create a network
     net = Network(784) # 28x28 images. this is the inputs to the network
@@ -126,14 +127,14 @@ def main():
     net.train(inputs_train, outputs_train, num_epochs, learning_rate)
 
     # test the network
-    inputs_test = x_test[:60000]
-    outputs_test = y_test[:60000]
+    inputs_test = x_test[:num_test_samples]
+    outputs_test = y_test[:num_test_samples]
 
     # calculate and print the accuracy
-    incorrect_predictions = 0
+    correct_predictions = 0
     for i in range(len(inputs_test)):
-        incorrect_predictions += np.argmax(net.forward(inputs_test[i])) == np.argmax(outputs_test[i])
-    print(f"Accuracy: {incorrect_predictions/len(inputs_test)*100:.2f}%")
+        correct_predictions += np.argmax(net.forward(inputs_test[i])) == np.argmax(outputs_test[i])
+    print(f"Accuracy: {correct_predictions/len(inputs_test)*100:.2f}%")
 
     # plot the loss over time, aka epochs
     plt.plot(net.loss)
