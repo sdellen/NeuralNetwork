@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
 import json
+import os
 foo = 1
 
 
@@ -131,7 +132,7 @@ def main_train():
   # only use a subset of the data to train
   inputs_train,outputs_train = x_train[:num_train_samples],y_train[:num_train_samples]
 
-  net = Network(784).add_layer(128).add_layer(10) # initializes the network
+  net = Network(784).add_layer(64).add_layer(10) # initializes the network
   loss = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
 
   # calculate and print the accuracy
@@ -141,18 +142,21 @@ def main_train():
   print(f"Accuracy: {corrects/len(x_test)*100:.2f}%")
 
   # export the weights and biases to json file
-  name = f"network-{net.num_inputs}"
+  name = f"{net.num_inputs}"
   for layer in net.layers:
     name += f"-{layer.num_nodes}"
-  name += ".json"
-  net.export(name)
+  
+  # check if file exists, if so, append a number to the end
+  if os.path.exists(f"network-{name}.json"):
+    i = 1
+    while os.path.exists(f"network-{name}-({i}).json"): i+=1
+    name += f"-({i})"
+      
+
+  net.export(f"network-{name}.json")
 
   # export the loss to csv file
-  name = f"loss-{net.num_inputs}"
-  for layer in net.layers:
-    name += f"-{layer.num_nodes}"
-  name += ".csv"
-  with open(name, "w") as f:
+  with open(f"loss-{name}.csv", "w") as f:
     f.write("epoch,loss\n")
     for i, loss in enumerate(loss):
       f.write(f"{i},{loss}\n")
