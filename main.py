@@ -121,7 +121,7 @@ class Layer():
     return self.W, self.b
 
 def main_train():
-  num_train_samples,num_epochs,learning_rate = 1000,50,1 # hyperparameters
+  num_train_samples,num_epochs,learning_rate = 60000,50,1 # hyperparameters
   (x_train, y_train), (x_test, y_test) = mnist.load_data() # load the mnist dataset
 
   # reshape and normalize the images
@@ -131,7 +131,7 @@ def main_train():
   # only use a subset of the data to train
   inputs_train,outputs_train = x_train[:num_train_samples],y_train[:num_train_samples]
 
-  net = Network(784).add_layer(10).add_layer(10) # initializes the 784->16->16->10 network
+  net = Network(784).add_layer(128).add_layer(10) # initializes the network
   loss = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
 
   # calculate and print the accuracy
