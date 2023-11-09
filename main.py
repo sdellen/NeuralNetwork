@@ -34,13 +34,13 @@ class Network():
   def backward(self, inputs, target, lr):
     self.output = self.forward(inputs)
 
-    self.layers[-1].calc_delta(target).backward(self.layers[-2].a, lr)
+    self.layers[-1].calc_delta(target)
+    for i in range(len(self.layers)-2, -1,-1):
+      self.layers[i].calc_delta_next(self.layers[i+1].deltas, self.layers[i+1].W)
 
-    for i in range(len(self.layers)-2, 0,-1):
-      self.layers[i].calc_delta_next(self.layers[i+1].deltas, self.layers[i+1].W)      
-      self.layers[i].backward(self.layers[i-1].a, lr)
-
-    self.layers[0].calc_delta_next(self.layers[1].deltas, self.layers[1].W).backward(inputs, lr)
+    input = inputs
+    for layer in self.layers:
+      input = layer.backward(input, lr).a
 
   def train(self, inputs, outputs, epochs, learning_rate):
     self.loss = []
@@ -100,7 +100,7 @@ class Layer():
 
 
 def main():
-  num_train_samples,num_epochs,learning_rate = 100,50,1 # hyperparameters
+  num_train_samples,num_epochs,learning_rate = 1000,50,1 # hyperparameters
   (x_train, y_train), (x_test, y_test) = mnist.load_data() # load the mnist dataset
 
   # reshape and normalize the images
