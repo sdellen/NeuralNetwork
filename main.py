@@ -2,7 +2,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from keras.datasets import mnist
-
+import json
 foo = 1
 
 
@@ -67,6 +67,24 @@ class Network():
     elapsed_time = time.time() - start_time
     # print elapsed time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
+    return self.loss
+  # export the weights and biases to json file
+  def export(self, filename):
+    
+    data = []
+    for layer in self.layers:
+      W, b = layer.get_params()
+      data.append({"W": W.tolist(), "b": b.tolist()})
+    with open(filename, "w") as f:
+      json.dump(data, f)
+
+  # import the weights and biases from json file
+  def import_(self, filename):
+    with open(filename, "r") as f:
+      data = json.load(f)
+    for i, layer in enumerate(self.layers):
+      layer.W = np.array(data[i]["W"])
+      layer.b = np.array(data[i]["b"])
 
 
 class Layer():
@@ -97,9 +115,12 @@ class Layer():
     self.b -= learning_rate * self.deltas
     self.W -= learning_rate * self.deltas * inputs[:, None]
     return self
+  
+  # get the weights and biases
+  def get_params(self):
+    return self.W, self.b
 
-
-def main():
+def main_train():
   num_train_samples,num_epochs,learning_rate = 1000,50,1 # hyperparameters
   (x_train, y_train), (x_test, y_test) = mnist.load_data() # load the mnist dataset
 
@@ -110,14 +131,32 @@ def main():
   # only use a subset of the data to train
   inputs_train,outputs_train = x_train[:num_train_samples],y_train[:num_train_samples]
 
-  net = Network(784).add_layer(16).add_layer(16).add_layer(10) # initializes the 784->16->16->10 network
-  net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
+  net = Network(784).add_layer(10).add_layer(10) # initializes the 784->16->16->10 network
+  loss = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
 
   # calculate and print the accuracy
   corrects = 0
   for i in range(len(x_test)):
     corrects += (np.argmax(net.forward(x_test[i])) == np.argmax(y_test[i]))
   print(f"Accuracy: {corrects/len(x_test)*100:.2f}%")
+
+  # export the weights and biases to json file
+  name = f"network-{net.num_inputs}"
+  for layer in net.layers:
+    name += f"-{layer.num_nodes}"
+  name += ".json"
+  net.export(name)
+
+  # export the loss to csv file
+  name = f"loss-{net.num_inputs}"
+  for layer in net.layers:
+    name += f"-{layer.num_nodes}"
+  name += ".csv"
+  with open(name, "w") as f:
+    f.write("epoch,loss\n")
+    for i, loss in enumerate(loss):
+      f.write(f"{i},{loss}\n")
+  
 
   # plot the loss over time, aka epochs
   plt.plot(net.loss)
@@ -126,5 +165,18 @@ def main():
   plt.show()
 
 
-if __name__ == "__main__":
-    main()
+def main_test():
+  (_, _), (x_test, y_test) = mnist.load_data() # load the mnist dataset
+  x_test,y_test = x_test.reshape(x_test.shape[0], -1).astype('float32') / 255,np.eye(10)[y_test]
+
+  net = Network(784).add_layer(32).add_layer(10) # initializes the 784->16->16->10 network
+  net.import_("network-784-32-10.json") # import the weights and biases from json file
+
+  # calculate and print the accuracy
+  corrects = 0
+  for i in range(len(x_test)):
+    corrects += (np.argmax(net.forward(x_test[i])) == np.argmax(y_test[i]))
+  print(f"Accuracy: {corrects/len(x_test)*100:.2f}%")
+
+
+main_train()
