@@ -52,7 +52,7 @@ class Network():
       epoch_loss = 0
       for j in range(len(inputs)):
         self.backward(inputs[j], outputs[j], learning_rate)
-        epoch_loss += np.mean(np.square(outputs[j] - self.output))
+        epoch_loss += 0.5*np.mean(np.square(outputs[j] - self.output))
 
       epoch_loss /= len(inputs)
       self.loss.append(epoch_loss)
@@ -122,7 +122,7 @@ class Layer():
     return self.W, self.b
 
 def main_train():
-  num_train_samples,num_epochs,learning_rate = 60000,50,1 # hyperparameters
+  num_train_samples,num_epochs,learning_rate = 600,50,1 # hyperparameters
   (x_train, y_train), (x_test, y_test) = mnist.load_data() # load the mnist dataset
 
   # reshape and normalize the images
@@ -132,7 +132,7 @@ def main_train():
   # only use a subset of the data to train
   inputs_train,outputs_train = x_train[:num_train_samples],y_train[:num_train_samples]
 
-  net = Network(784).add_layer(64).add_layer(10) # initializes the network
+  net = Network(784).add_layer(5).add_layer(10) # initializes the network
   loss = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
 
   # calculate and print the accuracy
