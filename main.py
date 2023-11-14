@@ -6,7 +6,7 @@ import json
 import os
 foo = 1
 
-
+# activation functions and their derivatives
 def sig(x): return 1 / (1 + np.exp(-x))
 def sig_prime(x): return x * (1 - x)
 def tanh(x): return np.tanh(x)
@@ -47,13 +47,17 @@ class Network():
     self.loss = []
     start_time = time.time()  # start the timer
     epoch_loss = 0
-
+    (_, _), (x_test, y_test) = mnist.load_data() # load the mnist dataset
+    x_test,y_test = x_test.reshape(x_test.shape[0], -1).astype('float32') / 255,np.eye(10)[y_test]
+    acc = []
     for i in range(epochs):
       epoch_loss = 0
+      
       for j in range(len(inputs)):
         self.backward(inputs[j], outputs[j], learning_rate)
         epoch_loss += 0.5*np.mean(np.square(outputs[j] - self.output))
-
+      #get accuracy
+      acc.append(self.get_accuracy(x_test, y_test))
       epoch_loss /= len(inputs)
       self.loss.append(epoch_loss)
 
@@ -68,7 +72,7 @@ class Network():
     elapsed_time = time.time() - start_time
     # print elapsed time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
-    return self.loss
+    return self.loss, acc
   # export the weights and biases to json file
   def export(self, filename):
     
@@ -87,6 +91,11 @@ class Network():
       layer.W = np.array(data[i]["W"])
       layer.b = np.array(data[i]["b"])
 
+  def get_accuracy(self, inputs, outputs):
+    corrects = 0
+    for i in range(len(inputs)):
+      corrects += (np.argmax(self.forward(inputs[i])) == np.argmax(outputs[i]))
+    return corrects / len(inputs)
 
 class Layer():
   def __init__(self, input_size, output_size, activation=sig, activation_prime=sig_prime):
@@ -116,13 +125,13 @@ class Layer():
     self.b -= learning_rate * self.deltas
     self.W -= learning_rate * self.deltas * inputs[:, None]
     return self
-  
+
   # get the weights and biases
   def get_params(self):
     return self.W, self.b
 
 def main_train():
-  num_train_samples,num_epochs,learning_rate = 600,50,1 # hyperparameters
+  num_train_samples,num_epochs,learning_rate = 60000,50,1 # hyperparameters
   (x_train, y_train), (x_test, y_test) = mnist.load_data() # load the mnist dataset
 
   # reshape and normalize the images
@@ -132,8 +141,9 @@ def main_train():
   # only use a subset of the data to train
   inputs_train,outputs_train = x_train[:num_train_samples],y_train[:num_train_samples]
 
-  net = Network(784).add_layer(5).add_layer(10) # initializes the network
-  loss = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
+  net = Network(784).add_layer(64).add_layer(10) # initializes the network
+  net.import_("network-784-64-10.json")
+  loss, acc = net.train(inputs_train, outputs_train, num_epochs, learning_rate) # train the network
 
   # calculate and print the accuracy
   corrects = 0
@@ -152,15 +162,13 @@ def main_train():
     while os.path.exists(f"network-{name}-({i}).json"): i+=1
     name += f"-({i})"
       
-
   net.export(f"network-{name}.json")
 
   # export the loss to csv file
   with open(f"loss-{name}.csv", "w") as f:
-    f.write("epoch,loss\n")
+    f.write("epoch,loss,accuracy\n")
     for i, loss in enumerate(loss):
-      f.write(f"{i},{loss}\n")
-  
+      f.write(f"{i+1},{loss},{acc[i]}\n")
 
   # plot the loss over time, aka epochs
   plt.plot(net.loss)
@@ -168,13 +176,12 @@ def main_train():
   plt.ylabel("Loss")
   plt.show()
 
-
 def main_test():
   (_, _), (x_test, y_test) = mnist.load_data() # load the mnist dataset
   x_test,y_test = x_test.reshape(x_test.shape[0], -1).astype('float32') / 255,np.eye(10)[y_test]
 
-  net = Network(784).add_layer(32).add_layer(10) # initializes the 784->16->16->10 network
-  net.import_("network-784-32-10.json") # import the weights and biases from json file
+  net = Network(784).add_layer(64).add_layer(10) # initializes the network
+  net.import_("network-784-128-10.json") # import the weights and biases from json file
 
   # calculate and print the accuracy
   corrects = 0
@@ -184,3 +191,4 @@ def main_test():
 
 
 main_train()
+# main_test()
